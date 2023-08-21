@@ -113,7 +113,7 @@ def getGrupos():
 
 @app.route('/grupo/<idGrupo>/sub-grupos', methods=['GET'])
 def getSubGrupos(idGrupo):
-  """Devolve a lista de SubGrupos de contas
+  """Devolve a lista de SubGrupos de contas do grupo informado
 
   Args:
       idGrupo (number): idGrupo pai
@@ -122,6 +122,13 @@ def getSubGrupos(idGrupo):
       sub-grupo: lista de sub-grupos de conta do grupo informado
   """
   subGrupos = []
+  with Session(engine) as session:
+    stmt = select(SubGrupo).where(SubGrupo.grupo_id == idGrupo)
+    for subgrupo in session.scalars(stmt):
+      subgrupoDict = {}
+      subgrupoDict["id"] = subgrupo.id
+      subgrupoDict["descricao"] = subgrupo.descricao
+      subGrupos.append(subgrupoDict)
 
   resposta_json = jsonify(subGrupos)
 
