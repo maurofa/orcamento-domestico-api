@@ -8,6 +8,8 @@ Serviços disponibilizados:
 - /gerar_orcamento: gerar o orçamento mensal ou anual de acordo com os lançamentos
 - /grupos: traz os grupos de conta
 - /sub-grupos: traz os sub-grupos de conta
+- /alterar: altera um lançamento
+- /excluir: exclui um lançamento
 
 Será disponibilizado o swagger com a documentação no seguinte endereço: /swagger-ui
 
