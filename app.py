@@ -1,5 +1,6 @@
 from flask import Flask, request, make_response, jsonify
 from datetime import date
+from sqlalchemy import select
 
 from model import Session, engine
 from model.grupo import Grupo
@@ -89,12 +90,19 @@ def gerarOrcamento():
 
 @app.route('/grupos', methods=['GET'])
 def getGrupos():
-  """Devolve a lista de grupos de conta existentes
+  """Devolve a lista de grupos de conta
 
   Returns:
-      Grupos: Lista de grupos de conta existentes.
+      Grupos: Lista de grupos de conta.
   """
   grupos = []
+  with Session(engine) as session:
+    stmt = select(Grupo)
+    for grupo in session.scalars(stmt):
+      grupoDict = { }
+      grupoDict["id"] = grupo.id
+      grupoDict["descricao"] = grupo.descricao
+      grupos.append(grupoDict)
 
   resposta_json = jsonify(grupos)
 
