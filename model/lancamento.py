@@ -15,6 +15,6 @@ class Lancamento(Base):
   valor: Mapped[float]
   ehReceita: Mapped[bool]
   quantasParcelas: Mapped[Optional[int]]
-  subGrupoId: Mapped[Optional[int]] = mapped_column(ForeignKey("sub_grupo.id"))
+  subGrupoId: Mapped[int] = mapped_column(ForeignKey("sub_grupo.id"))
 
   subGrupo: Mapped["SubGrupo"] = relationship()
