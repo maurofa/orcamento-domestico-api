@@ -51,7 +51,7 @@ def apresenta_lancamento(lancamento: Lancamento):
     "ehReceita": lancamento.ehReceita,
     "subGrupo": {
       "id": lancamento.subGrupoId,
-      "descricao": lancamento.subGrupo.descricao,
+      "descricao": lancamento.subGrupo and lancamento.subGrupo.descricao,
     },
   }
 
@@ -98,9 +98,9 @@ def apresenta_orcamento(lancamentos: List[Lancamento]):
   for lancamento in lancamentos:
     lancamentoDict = {
       "id": lancamento.id,
-      "dataDoFato": lancamento.dataDoFato,
+      "dataDoFato": lancamento.dataDoFato.isoformat(),
       "descricao": lancamento.descricao,
-      "valor": lancamento.valor / (lancamento.quantasParcelas or 1),
+      "valor": round((lancamento.valor / (lancamento.quantasParcelas or 1)), 2),
       "ehReceita": lancamento.ehReceita,
       "subGrupo": {
         "id": lancamento.subGrupoId,
@@ -108,7 +108,7 @@ def apresenta_orcamento(lancamentos: List[Lancamento]):
       },
     }
     orcamento.append(lancamentoDict)
-    saldo = saldo + lancamentoDict["valor"] * (1 if lancamento.ehReceita else -1)
+    saldo = round((saldo + lancamentoDict["valor"] * (1 if lancamento.ehReceita else -1)), 2)
   return {
     "orcamento": orcamento,
     "saldo": saldo,

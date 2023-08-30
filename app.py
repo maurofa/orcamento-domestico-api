@@ -168,6 +168,7 @@ def excluirLancamento(path: LancamentoPathSchema):
     if not lancamento:
       error_msg = 'Não foi possível encontrar o lançamento com o id informado.'
       return {"message": error_msg}, 404
+    retorno = apresenta_lancamento(lancamento)
     session.delete(lancamento)
     session.commit()
-    return apresenta_lancamento(lancamento), 200
+    return retorno, 200
