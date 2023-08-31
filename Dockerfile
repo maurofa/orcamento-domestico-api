@@ -10,8 +10,7 @@ ENV PYTHONUNBUFFERED 1
 # install the requirements
 COPY requirements.txt /app
 RUN --mount=type=cache,target=/root/.cache/pip \
-    python3 -m venv venv && source venv/bin/activate \
-    pip3 install -r requirements.txt
+    python3 -m venv venv && source venv/bin/activate && pip3 install -r requirements.txt
 
 COPY . .
 
