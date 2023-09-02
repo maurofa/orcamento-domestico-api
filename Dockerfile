@@ -8,9 +8,9 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # install the requirements
-COPY requirements-docker.txt /app
+COPY requirements.txt /app
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip3 install -r requirements-docker.txt
+    pip3 install -r requirements.txt
 
 COPY . .
 
