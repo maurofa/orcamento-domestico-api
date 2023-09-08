@@ -1,7 +1,7 @@
 from flask import redirect
 from flask_openapi3 import OpenAPI, Info, Tag
 from flask_cors import CORS
-from sqlalchemy import select
+from sqlalchemy import select, insert
 import calendar
 
 from model import Session, engine, Grupo, SubGrupo, Lancamento
@@ -43,17 +43,17 @@ def lancar(form: LancamentoSchema):
       if not subGrupo:
         error_msg = "Sub-grupo não encontrado pelo id informado: "+ subGrupoId
         return {"message": error_msg}, 404
-      lancamento = Lancamento(
-          dataDoFato = form.dataDoFato,
-          descricao = form.descricao,
-          valor = form.valor,
-          ehReceita = form.ehReceita,
-          quantasParcelas = form.quantasParcelas,
-          subGrupo = subGrupo
-        )
-      session.add(lancamento)
+      lancamento = session.scalar(
+        insert(Lancamento).returning(Lancamento),
+        {"dataDoFato" : form.dataDoFato,
+          "descricao" : form.descricao,
+          "valor" : form.valor,
+          "ehReceita" : form.ehReceita,
+          "quantasParcelas" : form.quantasParcelas,
+          "subGrupoId" : subGrupoId}
+      )
+      print(lancamento, apresenta_lancamento(lancamento))
       session.commit()
-
       return apresenta_lancamento(lancamento), 201
 
   except Exception as e:
@@ -114,14 +114,22 @@ def gerarOrcamento(query: OrcamentoQuery):
     mes = query.mes or date.today().month
     ano = query.ano or date.today().year
     inicio = date(ano, mes, 1)
-    (diaDaSemana, ultimoDia) = calendar.monthrange(ano, mes)
-    fim = date(ano, mes, ultimoDia)
+    fim = ultimo_dia_mes(ano, mes)
     stmt = select(Lancamento).where(Lancamento.dataDoFato.between(inicio, fim))
     orcamento = session.scalars(stmt).all()
     if not orcamento:
       error_msg = 'Não foi encontrado nenhum lançamento no mês ano informado.'
       return {"message": error_msg}, 404
     return apresenta_orcamento(orcamento), 200
+
+def ultimo_dia_mes(ano, mes):
+  """Retorna a data referente ao último dia do mês
+
+  Returns:
+      A data do último dia do mês no formato date
+  """
+  (diaDaSemana, ultimoDia) = calendar.monthrange(ano, mes)
+  return date(ano, mes, ultimoDia)
 
 
 
@@ -146,8 +154,9 @@ def alterarLancamento(path: LancamentoPathSchema, form: LancamentoSchema):
     lancamento.quantasParcelas = form.quantasParcelas
     lancamento.ehReceita = form.ehReceita
     lancamento.subGrupo = subGrupo
+    retorno = apresenta_lancamento(lancamento)
     session.commit()
-    return apresenta_lancamento(lancamento), 200
+    return retorno, 200
 
 
 

@@ -28,9 +28,7 @@ if not database_exists(engine.url):
 # cria as tabelas do banco, caso não existam
 Base.metadata.create_all(engine)
 
-with Session(engine) as session:
-  count = session.query(Grupo).count()
-  if not count:
+def carga_inicial(session):
     grupoReceita = Grupo(
         descricao = "Receita",
         subGrupos = [
@@ -158,4 +156,9 @@ with Session(engine) as session:
       grupoLazer,
       grupoFinanceiro,
     ])
+
+with Session(engine) as session:
+  count = session.query(Grupo).count()
+  if not count:
+    carga_inicial(session)
     session.commit()

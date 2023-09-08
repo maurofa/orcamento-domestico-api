@@ -81,8 +81,6 @@ class OrcamentoViewSchema(BaseModel):
   """Define como um orçamento será retornado.
   """
   orcamento:List[LancamentoView2Schema]
-  saldo:float = 100.0
-  quantidade:int = 50
 
 
 
@@ -92,8 +90,6 @@ def apresenta_orcamento(lancamentos: List[Lancamento]):
   Args:
       lancamentos (List[Lancamento]): lista de lançamentos dentro do mês-ano
   """
-  saldo = 0.0
-  quantidade = len(lancamentos)
   orcamento = []
   for lancamento in lancamentos:
     lancamentoDict = {
@@ -108,9 +104,6 @@ def apresenta_orcamento(lancamentos: List[Lancamento]):
       },
     }
     orcamento.append(lancamentoDict)
-    saldo = round((saldo + lancamentoDict["valor"] * (1 if lancamento.ehReceita else -1)), 2)
   return {
     "orcamento": orcamento,
-    "saldo": saldo,
-    "quantidade": quantidade,
   }
