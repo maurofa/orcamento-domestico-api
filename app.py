@@ -53,8 +53,9 @@ def lancar(form: LancamentoSchema):
           "subGrupoId" : subGrupoId}
       )
       print(lancamento, apresenta_lancamento(lancamento))
+      retorno = apresenta_lancamento(lancamento)
       session.commit()
-      return apresenta_lancamento(lancamento), 201
+      return retorno, 201
 
   except Exception as e:
     error_msg = "Não foi possível salvar o novo lançamento."
