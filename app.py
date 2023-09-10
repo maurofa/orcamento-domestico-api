@@ -129,7 +129,7 @@ def ultimo_dia_mes(ano, mes):
   Returns:
       A data do último dia do mês no formato date
   """
-  (diaDaSemana, ultimoDia) = calendar.monthrange(ano, mes)
+  (_, ultimoDia) = calendar.monthrange(ano, mes)
   return date(ano, mes, ultimoDia)
 
 
