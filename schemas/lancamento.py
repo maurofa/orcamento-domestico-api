@@ -45,7 +45,7 @@ def apresenta_lancamento(lancamento: Lancamento):
   """
   return {
     "id": lancamento.id,
-    "dataDoFato": lancamento.dataDoFato,
+    "dataDoFato": lancamento.dataDoFato.isoformat(),
     "descricao": lancamento.descricao,
     "valor": lancamento.valor,
     "ehReceita": lancamento.ehReceita,
