@@ -2,9 +2,10 @@ from flask import redirect
 from flask_openapi3 import OpenAPI, Info, Tag
 from flask_cors import CORS
 from sqlalchemy import select, insert
+from sqlalchemy.orm import Session
 import calendar
 
-from model import Session, engine, Grupo, SubGrupo, Lancamento
+from model import engine, Grupo, SubGrupo, Lancamento
 from schemas.error import *
 from schemas.grupo import *
 from schemas.lancamento import *
@@ -52,7 +53,6 @@ def lancar(form: LancamentoSchema):
           "quantasParcelas" : form.quantasParcelas,
           "subGrupoId" : subGrupoId}
       )
-      print(lancamento, apresenta_lancamento(lancamento))
       retorno = apresenta_lancamento(lancamento)
       session.commit()
       return retorno, 201

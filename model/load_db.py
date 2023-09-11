@@ -1,7 +1,16 @@
-from model.grupo import Grupo
-from model.grupo import SubGrupo
 
-def carga_inicial(session):
+from sqlalchemy.orm import Session
+from model import Grupo, SubGrupo
+
+# faz a carga inicial automaticamente se não tiver nenhum grupo
+def carga_inicial(engine):
+  with Session(engine) as session:
+    count = session.query(Grupo).count()
+    if not count:
+      carga_grupos(session)
+      session.commit()
+
+def carga_grupos(session: Session):
   grupoReceita = Grupo(
       descricao = "Receita",
       subGrupos = [

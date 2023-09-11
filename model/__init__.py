@@ -1,6 +1,5 @@
 from sqlalchemy_utils import database_exists, create_database
-from sqlalchemy.orm import Session
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine
 import os
 
 # importando os elemetos definidos no modelo
@@ -8,6 +7,7 @@ from model.base import Base
 from model.grupo import Grupo
 from model.grupo import SubGrupo
 from model.lancamento import Lancamento
+
 from model.load_db import carga_inicial
 
 db_path = "database/"
@@ -30,9 +30,5 @@ if not database_exists(engine.url):
 Base.metadata.create_all(engine)
 
 
-# faz a carga inicial automaticamente se não tiver nenhum grupo
-with Session(engine) as session:
-  count = session.query(Grupo).count()
-  if not count:
-    carga_inicial(session)
-    session.commit()
+
+carga_inicial(engine)
