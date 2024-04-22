@@ -1,9 +1,11 @@
 from flask import redirect
 from flask_openapi3 import OpenAPI, Info, Tag
 from flask_cors import CORS
-from sqlalchemy import select, insert
+from sqlalchemy import select, insert, or_, and_
 from sqlalchemy.orm import Session
 import calendar
+from dateutil.relativedelta import relativedelta
+import math
 
 from model import engine, Grupo, SubGrupo, Lancamento
 from schemas.error import *
@@ -28,7 +30,7 @@ def home():
 
 
 
-@app.post('/lancar', tags=[lancamento_tag],
+@app.post('/lancamentos', tags=[lancamento_tag],
           responses={"201": LancamentoViewSchema, "400": ErrorSchema, "404": ErrorSchema})
 def lancar(form: LancamentoSchema):
   """Faz o lançamento do débito ou crédito
@@ -44,16 +46,41 @@ def lancar(form: LancamentoSchema):
       if not subGrupo:
         error_msg = "Sub-grupo não encontrado pelo id informado: "+ subGrupoId
         return {"message": error_msg}, 404
-      lancamento = session.scalar(
-        insert(Lancamento).returning(Lancamento),
-        {"dataDoFato" : form.dataDoFato,
-          "descricao" : form.descricao,
-          "valor" : form.valor,
-          "ehReceita" : form.ehReceita,
-          "quantasParcelas" : form.quantasParcelas,
-          "subGrupoId" : subGrupoId}
-      )
-      retorno = apresenta_lancamento(lancamento)
+
+      if form.quantidadeDeParcelas:
+        valor = math.floor(form.valor * 100 / form.quantidadeDeParcelas) / 100
+        for i in range(form.quantidadeDeParcelas) :
+          if i == 0:
+            valorDaPrimeira = valor + (math.floor(form.valor * 100) % form.quantidadeDeParcelas) / 100
+            dataDePagamento = form.dataDePagamento
+          else:
+            dataDePagamento = dataDePagamento + relativedelta(months=1)
+          lancamento = session.scalar(
+            insert(Lancamento).returning(Lancamento),
+            {"dataDaCompra" : form.dataDaCompra,
+              "dataDePagamento": dataDePagamento,
+              "descricao" : form.descricao,
+              "valor" : valorDaPrimeira if i == 0 else valor,
+              "ehCredito" : form.ehCredito,
+              "compraNoDebito": form.compraNoDebito,
+              "numeroParcela" : i + 1,
+              "subGrupoId" : subGrupoId}
+          )
+          if i == 0:
+            retorno = apresenta_lancamento(lancamento)
+      else:
+        lancamento = session.scalar(
+            insert(Lancamento).returning(Lancamento),
+            {"dataDaCompra" : form.dataDaCompra,
+              "dataDePagamento": form.dataDePagamento,
+              "descricao" : form.descricao,
+              "valor" : form.valor,
+              "ehCredito" : form.ehCredito,
+              "compraNoDebito": form.compraNoDebito,
+              "subGrupoId" : subGrupoId}
+          )
+        retorno = apresenta_lancamento(lancamento)
+
       session.commit()
       return retorno, 201
 
@@ -79,32 +106,9 @@ def getGrupos():
 
 
 
-@app.get('/grupo/<int:idGrupo>/sub-grupos', tags=[grupo_tag],
-         responses={"200": ListagemSubGrupoSchema, "404": ErrorSchema})
-def getSubGrupos(path: SubGrupoPath):
-  """Devolve a lista de SubGrupos de contas do grupo informado
-
-  Args:
-      idGrupo (number): idGrupo pai
-
-  Returns:
-      sub-grupo: lista de sub-grupos de conta do grupo informado
-  """
-  with Session(engine) as session:
-    stmt = select(SubGrupo).where(SubGrupo.grupo_id == path.idGrupo)
-    subGrupos = session.scalars(stmt).all()
-    if not subGrupos:
-      error = {"msg": "Sub-grupo não encontrado pelo id informado: "+path.idGrupo}
-      return {"message": error}, 404
-    return apresenta_sub_grupos(subGrupos), 200
-
-
-
-
-
-@app.get('/gerar_orcamento', tags=[lancamento_tag],
-         responses={"200": OrcamentoViewSchema, "404": ErrorSchema})
-def gerarOrcamento(query: OrcamentoQuery):
+@app.get('/lancamentos', tags=[lancamento_tag],
+         responses={"200": LancamentosViewSchema, "404": ErrorSchema})
+def gerarListaLancamentos(query: LancamentosQuery):
   """Gera o orçamento do mês/ano informado.
 
   Returns:
@@ -116,12 +120,14 @@ def gerarOrcamento(query: OrcamentoQuery):
     ano = query.ano or date.today().year
     inicio = date(ano, mes, 1)
     fim = ultimo_dia_mes(ano, mes)
-    stmt = select(Lancamento).where(Lancamento.dataDoFato.between(inicio, fim))
-    orcamento = session.scalars(stmt).all()
-    if not orcamento:
+    stmt = select(Lancamento).where(
+      or_(Lancamento.dataDePagamento.between(inicio, fim),
+             and_(Lancamento.dataDePagamento == None, Lancamento.dataDaCompra.between(inicio, fim))))
+    lancamentos = session.scalars(stmt).all()
+    if not lancamentos:
       error_msg = 'Não foi encontrado nenhum lançamento no mês ano informado.'
       return {"message": error_msg}, 404
-    return apresenta_orcamento(orcamento), 200
+    return apresenta_lancamentos(lancamentos), 200
 
 def ultimo_dia_mes(ano, mes):
   """Retorna a data referente ao último dia do mês
@@ -134,7 +140,7 @@ def ultimo_dia_mes(ano, mes):
 
 
 
-@app.put('/lancamento/<int:idLancamento>/alterar', tags=[lancamento_tag],
+@app.put('/lancamentos/<int:idLancamento>/alterar', tags=[lancamento_tag],
          responses={"200": LancamentoViewSchema, "404": ErrorSchema})
 def alterarLancamento(path: LancamentoPathSchema, form: LancamentoSchema):
   """Altera um lançamento
@@ -150,18 +156,19 @@ def alterarLancamento(path: LancamentoPathSchema, form: LancamentoSchema):
       error_msg = 'Não foi possível encontrar o lançamento ou o subGrupo com o id informado.'
       return {"message": error_msg}, 404
     lancamento.descricao = form.descricao
-    lancamento.dataDoFato = form.dataDoFato
+    lancamento.dataDaCompra = form.dataDaCompra
+    lancamento.dataDePagamento = form.dataDePagamento
+    lancamento.compraNoDebito = form.compraNoDebito
     lancamento.valor = form.valor
-    lancamento.quantasParcelas = form.quantasParcelas
-    lancamento.ehReceita = form.ehReceita
     lancamento.subGrupo = subGrupo
+    lancamento.ehCredito = form.ehCredito
     retorno = apresenta_lancamento(lancamento)
     session.commit()
     return retorno, 200
 
 
 
-@app.delete('/lancamento/<int:idLancamento>/excluir', tags=[lancamento_tag],
+@app.delete('/lancamentos/<int:idLancamento>/excluir', tags=[lancamento_tag],
             responses={"200": LancamentoViewSchema, "404": ErrorSchema})
 def excluirLancamento(path: LancamentoPathSchema):
   """Exclui um lançamento

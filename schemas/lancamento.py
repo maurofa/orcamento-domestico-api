@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from datetime import date
 from typing import Optional, List
+from dateutil.relativedelta import relativedelta
 
 from model.lancamento import Lancamento
 from schemas.grupo import SubGrupoViewSchema
@@ -8,11 +9,13 @@ from schemas.grupo import SubGrupoViewSchema
 class LancamentoSchema(BaseModel):
   """Define os campos de um novo lançamento a ser inserido
   """
-  dataDoFato: Optional[date] = date.today()
+  dataDaCompra: Optional[date] = date.today()
+  dataDePagamento: Optional[date]
   descricao: str = 'sofá'
   valor: float = 1530.3
-  ehReceita: bool = False
-  quantasParcelas: Optional[int]=6
+  ehCredito: bool = False
+  compraNoDebito: Optional[bool]
+  quantidadeDeParcelas: Optional[int]
   subGrupoId: int = 19
 
 
@@ -28,11 +31,13 @@ class LancamentoViewSchema(BaseModel):
   """Define como um lançamento será retornado.
   """
   id: int = 1
-  dataDoFato: date = date.today()
+  dataDaCompra: date = date.today()
+  dataDePagamento: date = date.today()
   descricao: str = 'sofá'
-  valor: float = 1530,3
-  ehReceita: bool = False
-  quantasParcelas: int = 6
+  valor: float = 510.1
+  ehCredito: bool = False
+  compraNoDebito: bool = False
+  numeroParcela: int = 1
   subGrupo: SubGrupoViewSchema
 
 
@@ -45,10 +50,13 @@ def apresenta_lancamento(lancamento: Lancamento):
   """
   return {
     "id": lancamento.id,
-    "dataDoFato": lancamento.dataDoFato.isoformat(),
+    "dataDaCompra": lancamento.dataDaCompra.isoformat(),
+    "dataDePagamento": lancamento.dataDePagamento and lancamento.dataDePagamento.isoformat(),
     "descricao": lancamento.descricao,
     "valor": lancamento.valor,
-    "ehReceita": lancamento.ehReceita,
+    "ehCredito": lancamento.ehCredito,
+    "compraNoDebito": lancamento.compraNoDebito,
+    "numeroParcela": lancamento.numeroParcela,
     "subGrupo": {
       "id": lancamento.subGrupoId,
       "descricao": lancamento.subGrupo and lancamento.subGrupo.descricao,
@@ -57,53 +65,30 @@ def apresenta_lancamento(lancamento: Lancamento):
 
 
 
-class OrcamentoQuery(BaseModel):
-  """Define os path params para o Orçamento
+class LancamentosQuery(BaseModel):
+  """Define os query params para o Orçamento
   """
   mes: Optional[int] = Field(date.today().month, ge=1, le=12, description='Mês')
   ano: Optional[int] = Field(date.today().year, ge=2021, le=date.today().year, description='Ano')
 
 
 
-class LancamentoView2Schema(BaseModel):
-  """Define como o lançamento será exibido no orçamento
+class LancamentosViewSchema(BaseModel):
+  """Define como os lançamentos serão retornados.
   """
-  id: int = 1
-  dataDoFato: date = date.today()
-  descricao: str = 'sofá'
-  valor: float = 255.0
-  ehReceita: bool = False
-  subGrupo: SubGrupoViewSchema
+  lancamentos:List[LancamentoViewSchema]
 
 
 
-class OrcamentoViewSchema(BaseModel):
-  """Define como um orçamento será retornado.
-  """
-  orcamento:List[LancamentoView2Schema]
-
-
-
-def apresenta_orcamento(lancamentos: List[Lancamento]):
-  """Retorna uma representação do lançamento levando em consideração o OrcamentoViewSchema
+def apresenta_lancamentos(lancamentos: List[Lancamento]):
+  """Retorna uma representação dos lançamentos levando em consideração o LancamentosViewSchema
 
   Args:
       lancamentos (List[Lancamento]): lista de lançamentos dentro do mês-ano
   """
-  orcamento = []
+  lancamentosList = []
   for lancamento in lancamentos:
-    lancamentoDict = {
-      "id": lancamento.id,
-      "dataDoFato": lancamento.dataDoFato.isoformat(),
-      "descricao": lancamento.descricao,
-      "valor": round((lancamento.valor / (lancamento.quantasParcelas or 1)), 2),
-      "ehReceita": lancamento.ehReceita,
-      "subGrupo": {
-        "id": lancamento.subGrupoId,
-        "descricao": lancamento.subGrupo.descricao,
-      },
-    }
-    orcamento.append(lancamentoDict)
+    lancamentosList.append(apresenta_lancamento(lancamento))
   return {
-    "orcamento": orcamento,
+    "lancamentos": lancamentosList,
   }
