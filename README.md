@@ -1,17 +1,16 @@
 # orcamento-domestico-api
 
-API do Sistema de Orçamento Doméstico, feito usando Python e Flask. Na persistência será utilizado o SQLite. Utilizando a IDE PyCharm.
+API do Sistema de Orçamento Doméstico, feito usando Python e Flask. Na persistência será utilizado o SQLite.
 
 Serviços disponibilizados:
 
-- /lancar: Lança débitos ou créditos no orçamento
-- /grupos: traz os grupos de conta
-- /sub-grupos: traz os sub-grupos de conta
-- /gerar_orcamento: gerar o orçamento mensal ou anual de acordo com os lançamentos
-- /alterar: altera um lançamento
-- /excluir: exclui um lançamento
+- POST /lancamentos: Lança débitos ou créditos
+- GET /grupos: traz os grupos de conta
+- GET /lancamentos: gerar o orçamento mensal
+- PUT /lancamentos/<idLancamento>/alterar: altera um lançamento
+- DELETE /lancamentos/<idLancamento>/excluir: exclui um lançamento
 
-Será disponibilizado o swagger com a documentação no seguinte endereço: /swagger-ui
+Será disponibilizado o swagger com a documentação no seguinte endereço: /openapi
 
 ---
 

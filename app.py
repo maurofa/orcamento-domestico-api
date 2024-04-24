@@ -12,13 +12,13 @@ from schemas.error import *
 from schemas.grupo import *
 from schemas.lancamento import *
 
-info = Info(title="API do Orçamento Doméstico", version="0.1")
+info = Info(title="API do Orçamento Doméstico", version="0.2")
 app = OpenAPI(__name__, info=info)
 CORS(app)
 
 home_tag = Tag(name="Documentação", description="Seleção de documentação: Swagger, Redoc ou RapidDoc")
 lancamento_tag = Tag(name="Lançamento", description="Adição, visualização, remoção e alteração de lançamentos de receitas e despesas")
-grupo_tag = Tag(name="Grupo e Sub-grupo", description="Listagem de Grupos e Sub-grupos")
+grupo_tag = Tag(name="Grupo", description="Listagem de Grupos")
 
 
 
