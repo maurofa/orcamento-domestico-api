@@ -1,7 +1,6 @@
 from pydantic import BaseModel, Field
 from datetime import date
 from typing import Optional, List
-from dateutil.relativedelta import relativedelta
 
 from model.lancamento import Lancamento
 from schemas.grupo import SubGrupoViewSchema

@@ -53,7 +53,7 @@ Execute **como administrador** o seguinte comando para construir a imagem Docker
 $ docker build -t orcamento-domestico-api .
 ```
 
-Uma vez criada a imagem, para executar o container basta executar, **como administrador**, seguinte o comando:
+Uma vez criada a imagem, para executar o container basta executar, **como administrador**, o seguinte comando:
 
 ```shell
 $ docker run -dp 5000:5000 orcamento-domestico-api
