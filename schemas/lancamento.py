@@ -31,12 +31,12 @@ class LancamentoViewSchema(BaseModel):
   """
   id: int = 1
   dataDaCompra: date = date.today()
-  dataDePagamento: date = date.today()
+  dataDePagamento: Optional[date]
   descricao: str = 'sofá'
   valor: float = 510.1
   ehCredito: bool = False
-  compraNoDebito: bool = False
-  numeroParcela: int = 1
+  compraNoDebito: Optional[bool]
+  numeroParcela: Optional[int]
   subGrupo: SubGrupoViewSchema
 
 
